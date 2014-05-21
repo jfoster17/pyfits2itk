@@ -8,6 +8,10 @@ for converting astronomy data (such as flipping the RA/longitude axis) and
 then calls the [pynrrd][3] module (included) to write out a [nrrd][4] file for 
 inport into 3D programs such as Slicer3D.
 
+Since Slicer3D does not understand astronomy coordinates, you must preregister
+all cubes before converting them to nrrd. In addition, it is necessary to 
+"center" all files when loading them into Slicer.
+
 [1]: http://astromed.iic.harvard.edu/FITS-reader
 [2]: http://www.astropy.org/
 [3]: https://github.com/mhe/pynrrd
@@ -16,11 +20,22 @@ inport into 3D programs such as Slicer3D.
 Dependencies
 ------------
 
-[astropy][1]. If you have astropy (which requires [numpy][2]) then you're 
+[astropy][1]
+
+If you have astropy (which requires [numpy][2]) then you're 
 good to go.
 
 [1]: http://www.astropy.org/
 [2]: http://numpy.scipy.org/
+
+Optional Dependencies
+------------
+[scipy][1]
+
+Scipy is used to do the interpolation regridding required if 
+one wants to rescale the velocity axis.
+
+[1]: http://www.scipy.org/
 
 
 Installation
