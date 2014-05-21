@@ -16,4 +16,6 @@ def convert(inputfile,outputfile):
     d = np.swapaxes(d,0,2)
     nrrd.write(outputfile,d)
     
-    
+def read(inputfile):
+    data,options = nrdd.read(inputfile)
+    return(data,options)
