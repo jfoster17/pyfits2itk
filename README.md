@@ -54,6 +54,9 @@ Example usage
 
 	fits2itk.convert(inputfits,outputfile)
 
+	#Or rescale the data and velocity scale relative to spatial
+	fits2itk.convert("13co10_done.fits","output.nrrd",data_scale=10,velocity_scale=2.)
+
 	# read in the nrrd file to examine it
 	readdata, options = fits2itk.read(filename)
 	print readdata.shape
