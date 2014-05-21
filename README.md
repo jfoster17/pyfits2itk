@@ -1,17 +1,26 @@
-pynrrd
+pyfits2itk
 ===========
 
-pynrrd is a pure-Python module for reading and writing [nrrd][1] files into and 
-from numpy arrays.
+pyfits2itk is a Python replacement for [fits2itk][1] from the IIC/Astronomical 
+Medicine Project, which is no longer maintained. This module uses [astropy][2] 
+to read in a FITS cube or image, performs some simple manipulations useful 
+for converting astronomy data (such as flipping the RA/longitude axis) and
+then calls the pynrrd module (included) to write out a [nrrd][3] file for 
+inport into 3D programs such as Slicer3D.
 
-[1]: http://teem.sourceforge.net/nrrd/
+[1]: http://astromed.iic.harvard.edu/FITS-reader
+[2]: http://www.astropy.org/
+[3]: http://teem.sourceforge.net/nrrd/
 
 Dependencies
 ------------
 
-The module's only dependency is [numpy][2].
+[astropy][1]. If you have astropy (which requires [numpy][2]) then you're 
+good to go.
 
+[1]: http://www.astropy.org/
 [2]: http://numpy.scipy.org/
+
 
 Installation
 ------------
@@ -21,38 +30,18 @@ Installation
 Example usage
 -------------
 
-    import numpy as np
-	import nrrd
+    import fits2itk
 
-	# some sample numpy data
-	data = np.zeros((5,4,3,2))
-	filename = 'testdata.nrrd'
+	# convert a FITS file using the default parameters
+	inputfile = "ngc1333_co.fits"
+	outputfile = "ngc1333_co.nrrd"
 
-	# write to a nrrd file
-	nrrd.write(filename, data)
+	fits2itk.convert(inputfits,outputfile)
 
-	# read the data back from file
-	readdata, options = nrrd.read(filename)
+	# read in the nrrd file to examine it
+	readdata, options = fits2itk.read(filename)
 	print readdata.shape
 	print options
-
-Bugs and shortcomings
----------------------
-
-Most of the [nrrd format specification][3] is implemented. Exceptions
-are: 
-
--  files where encoding is 'txt', 'text', or 'ascii'
--  files where "data file" is "LIST"
-
-Other shortcomings:
-
-- More documentation is desirable, in particular for the options that
-  can be passed to the write function.
-- pynrrd is currently probably fairly forgiving in what it accepts for as
-  nrrd files and could be made stricter.
-
-[3]: http://teem.sourceforge.net/nrrd/format.html
 
 
 License

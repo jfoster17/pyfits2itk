@@ -1,9 +1,9 @@
 from distutils.core import setup
-setup(name='pynrrd',
+setup(name='pyfits2itk',
       version='0.1',
-      description='Pure python module for reading nrrd files.',
-      author='Maarten Everts',
-      author_email='maarten@bitpuzzle.com',
-      url='http://github.com/mhe/pynrrd',
-      py_modules=['nrrd'],
+      description='Convert astronomy FITS files to NRDD.',
+      author='Jonathan Foster',
+      author_email='jonathan.bruce.foster@gmail.com',
+      url='http://github.com/jfoster17/pyfits2itk',
+      py_modules=['fits2itk','nrrd'],
       )
