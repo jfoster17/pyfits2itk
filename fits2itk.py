@@ -5,10 +5,10 @@ fits2itk.py
 """
 
 import nrrd
-import astropy
+from astropy.io import fits
 
 def convert(inputfile,outputfile):
-    d,h = pyfits.getdata(inputfile,header=True)
+    d,h = fits.getdata(inputfile,header=True)
     #Assume FITS order is RA,Dec,Velocity
     #Numpy order is Velocity, Dec, RA
     #Slicer wants RA, Velocity, Dec

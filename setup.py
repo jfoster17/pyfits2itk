@@ -1,4 +1,6 @@
 from distutils.core import setup
+import setuptools
+
 setup(name='pyfits2itk',
       version='0.1',
       description='Convert astronomy FITS files to NRDD.',
