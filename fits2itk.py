@@ -6,6 +6,7 @@ fits2itk.py
 
 import nrrd
 from astropy.io import fits
+import numpy as np
 
 def convert(inputfile,outputfile):
     d,h = fits.getdata(inputfile,header=True)
