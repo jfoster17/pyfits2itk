@@ -62,6 +62,22 @@ Example usage
 	print readdata.shape
 	print options
 
+Advanced usage
+-------------
+If all your datasubes are fairly homogeneous, you can put them 
+all on the same scale. Currently this requires editing fits2itk.py
+manually to set c_dict parameters (defaults only sensible for test datasets)
+
+In the following there are two cubes with different spatial/spectral resolution
+and only partially overlapping in space. With the use_conv flag the dimensions
+are rescaled so that they will properly register when imported into Slicer3D 
+(other 3D software not tested). The c18o32 file has velocities in km/s, while
+the 13co10 file has velocities in m/s, so velocity_scale is used to account for 
+this.
+
+	import fits2itk
+	fits2itk.convert("ngc1333_c18o32.fits","c18o32.nrrd",velocity_scale=1000.,use_conv=True)
+	fits2itk.convert("ngc1333_13co10.fits","13co10.nrrd",velocity_scale=1.,use_conv=True)
 
 License
 -------
