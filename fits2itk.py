@@ -45,10 +45,18 @@ def convert(inputfile,outputfile,data_scale=1.,velocity_scale=False,use_conv=Fal
         match the axes. Setting velocity_scale=1 preserves the 
         relative scales.
         
-    use_conv: Use a fixed convention for conversion.
-        This convention defines a fixed a system for conversion
-        1 arcsecond = 1 mm
-        0.1 km/s = 1 mm
+    use_conv: EXPERIMENTAL! Use a fixed convention for conversion.
+        Use some fixed values for the conversion of pixels
+        to millimeters. This allows one to convert multiple
+        different cubes/images and overlay them in Slicer3D 
+        without needing to regrid/interpolate them ahead of time.
+        Currently EXPERIMENTAL and assumes RA/Dec/Vel
+        Vel can be in km/s or m/s. Use velocity_scale to 
+        manually specify (i.e. use velocity_scale = 1000. for
+        the cubes in km/s and velocity_scale = 1. for the cubes
+        in m/s.). Alwas specify velocity_scale when using this
+        option.
+        
     """
     
     d,h = fits.getdata(inputfile,header=True)
@@ -61,8 +69,10 @@ def convert(inputfile,outputfile,data_scale=1.,velocity_scale=False,use_conv=Fal
         min_spatial = np.min(h['NAXIS1'],h['NAXIS2'])
         vel_length = h['NAXIS3']
         velocity_scale = min_spatial/vel_length
-    
-    if velocity_scale != 1 and not use_conv:
+    if velocity_scale != 1 and not use_conv: #regrid velocity
+        #This really isn't necessary or desireable. We could
+        #just change the velocity scaling in the NRRD file
+        #like we do for use_conv
         import pycongrid
         d = pycongrid.congrid(d,(h['NAXIS3']*velocity_scale,
                                  h['NAXIS2'],h['NAXIS1']),
@@ -76,6 +86,7 @@ def convert(inputfile,outputfile,data_scale=1.,velocity_scale=False,use_conv=Fal
     d = np.swapaxes(d,0,2)
     #options = {'encoding':'raw'}
     
+    #Want the _center_ of the cube at 0
     spaceorigin = -1*np.array(d.shape)/2.
     
     dra = 1.
@@ -84,44 +95,47 @@ def convert(inputfile,outputfile,data_scale=1.,velocity_scale=False,use_conv=Fal
     racenter = 0
     deccenter = 0
     velcenter = 0
-    
+
+    #This dictionary defines a convention for
+    #aligning cubes. Make this a possible input
+    #ra-mm is the conversion between mm and degrees of arc
+    #A value of around 9000 works well for NGC1333
+    #vel-mm is beween mm and m/s. 1 is fine for NGC1333
+    #ra0,dec0,vel0 is the center in degrees and m/s.
+
+    c_dict = {"ra-mm":9000.,
+              "dec-mm":9000.,
+              "vel-mm":1.,
+              "ra0":52.24,
+              "dec0":31.40,
+              "vel0":7800.}
+
     
     if use_conv:
-        dra = h['CDELT1']*60.*150.
-        ddec = h['CDELT2']*60.*150.
-        dvel = h['CDELT3']/100.*velocity_scale*100. #Requires m/s
-        ra0 = 52.24
-        dec0 = 31.4
-        vel0 = 7800./velocity_scale
-        racenter = (ra0-h['CRVAL1'])*np.cos(31.4*3.14/180.)/h['CDELT1']+h['CRPIX1']
-        print(racenter)
+        dra  = h['CDELT1']*c_dict['ra-mm']
+        ddec = h['CDELT2']*c_dict['dec-mm']
+        dvel = h['CDELT3']*c_dict['vel-mm']*velocity_scale #Requires m/s
+        ra0  = c_dict['ra0']
+        dec0 = c_dict['dec']
+        vel0 = c_dict['vel0']/velocity_scale
+        racenter = (ra0-h['CRVAL1'])*np.cos(c_dict['dec0']*3.14/180.)/h['CDELT1']+h['CRPIX1']
         deccenter = -1*((dec0-h['CRVAL2'])/h['CDELT2']+h['CRPIX2'])
-        print(deccenter)
         velcenter = -1*((vel0-h['CRVAL3'])/(h['CDELT3'])+h['CRPIX3'])
-        #print(racenter,deccenter,velcenter)
 
-
-    #We need to use the spaceorigin to align these cubes
-    #This will have to be set in an external file or from the command line
-    
     options = {}
     options['space'] = 'left-posterior-superior'
     options['space directions'] = [(-1*dra,0,0),(0,dvel,0),(0,0,ddec)]
     options['kinds'] = ['domain','domain','domain']
-    #spaceorigin[0] = (-spaceorigin[0]- racenter)*dra
-    #spaceorigin[1] = (-spaceorigin[1]- velcenter)*dvel
-    #spaceorigin[2] = (-spaceorigin[2]- deccenter)*ddec
-
     spaceorigin[0] = racenter*dra
     spaceorigin[1] = velcenter*dvel
     spaceorigin[2] = deccenter*ddec
-
-    
     options['space origin'] = spaceorigin
+
+    #This could be an option. 'raw' allows import in paraview. 'gzip' files can
+    #be a lot smaller, depending on the cube.
     options['encoding'] = 'raw'
     print(options)
-    #options['space origin'] = [75,50,75]
-    nrrd.write(outputfile,d,options=options)#,options=options)
+    nrrd.write(outputfile,d,options=options)
     
 def read(inputfile):
     data,options = nrdd.read(inputfile)
