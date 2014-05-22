@@ -9,8 +9,10 @@ then calls the [pynrrd][3] module (included) to write out a [nrrd][4] file for
 inport into 3D programs such as Slicer3D.
 
 Since Slicer3D does not understand astronomy coordinates, you must preregister
-all cubes before converting them to nrrd. In addition, it is necessary to 
-"center" all files when loading them into Slicer.
+and congrid all cubes externally before converting them to nrrd.
+
+There is limited support for converting astronomy coordinates into units
+Slicer3D does understand. See Advanced Usage.
 
 [1]: http://astromed.iic.harvard.edu/FITS-reader
 [2]: http://www.astropy.org/
@@ -45,8 +47,8 @@ Installation
 
 Example usage
 -------------
-
-    import fits2itk
+```python
+	import fits2itk
 
 	# convert a FITS file using the default parameters
 	inputfile = "ngc1333_co.fits"
@@ -61,7 +63,7 @@ Example usage
 	readdata, options = fits2itk.read(filename)
 	print readdata.shape
 	print options
-
+```
 Advanced usage
 -------------
 If all your datasubes are fairly homogeneous, you can put them 
