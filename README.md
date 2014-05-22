@@ -47,22 +47,23 @@ Installation
 
 Example usage
 -------------
+
 ```python
-	import fits2itk
+import fits2itk
 
 	# convert a FITS file using the default parameters
-	inputfile = "ngc1333_co.fits"
-	outputfile = "ngc1333_co.nrrd"
+inputfile = "ngc1333_co.fits"
+outputfile = "ngc1333_co.nrrd"
 
-	fits2itk.convert(inputfits,outputfile)
+fits2itk.convert(inputfits,outputfile)
 
 	#Or rescale the data and velocity scale relative to spatial
-	fits2itk.convert("13co10_done.fits","output.nrrd",data_scale=10,velocity_scale=2.)
+fits2itk.convert("13co10_done.fits","output.nrrd",data_scale=10,velocity_scale=2.)
 
 	# read in the nrrd file to examine it
-	readdata, options = fits2itk.read(filename)
-	print readdata.shape
-	print options
+readdata, options = fits2itk.read(filename)
+print readdata.shape
+print options
 ```
 Advanced usage
 -------------
@@ -77,10 +78,11 @@ are rescaled so that they will properly register when imported into Slicer3D
 the 13co10 file has velocities in m/s, so velocity_scale is used to account for 
 this.
 
-	import fits2itk
-	fits2itk.convert("ngc1333_c18o32.fits","c18o32.nrrd",velocity_scale=1000.,use_conv=True)
-	fits2itk.convert("ngc1333_13co10.fits","13co10.nrrd",velocity_scale=1.,use_conv=True)
-
+```python
+import fits2itk
+fits2itk.convert("ngc1333_c18o32.fits","c18o32.nrrd",velocity_scale=1000.,use_conv=True)
+fits2itk.convert("ngc1333_13co10.fits","13co10.nrrd",velocity_scale=1.,use_conv=True)
+```
 License
 -------
 
