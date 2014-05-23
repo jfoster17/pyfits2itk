@@ -102,7 +102,7 @@ def convert(infile,outfile,data_scale=1.,vel_scale=False,use_conv=False):
     
     if use_conv:
         # This line imports the dictionary defined in your convention 
-        # file. The example included is called ngc1333_conv.py
+        # file. The example included is called "ngc1333_conv"
         i = importlib.import_module(use_conv)
         dra  = h['CDELT1']*i.c_dict['ra-mm']
         ddec = h['CDELT2']*i.c_dict['dec-mm']

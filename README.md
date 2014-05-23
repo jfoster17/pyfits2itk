@@ -52,13 +52,19 @@ Example usage
 import fits2itk
 
 	# convert a FITS file using the default parameters
-inputfile = "ngc1333_co.fits"
-outputfile = "ngc1333_co.nrrd"
+infile = "ngc1333_co.fits"
+outfile = "ngc1333_co.nrrd"
 
-fits2itk.convert(inputfits,outputfile)
+fits2itk.convert(infile,outfile)
 
 	#Or rescale the data and velocity scale relative to spatial
-fits2itk.convert("13co10_done.fits","output.nrrd",data_scale=10,velocity_scale=2.)
+fits2itk.convert("13co10_done.fits","output.nrrd",data_scale=10,vel_scale=2.)
+
+
+	# orconvert a FITS file using parameters defined
+	# in an external file
+
+fits2itk.convert(infile,outfile,vel_scale=1,use_conv="ngc1333_conv")
 
 	# read in the nrrd file to examine it
 readdata, options = fits2itk.read(filename)
@@ -68,20 +74,22 @@ print options
 Advanced usage
 -------------
 If all your datasubes are fairly homogeneous, you can put them 
-all on the same scale. Currently this requires editing fits2itk.py
-manually to set c_dict parameters (defaults only sensible for test datasets)
+all on the same scale. Create a dictionary for this transformation
+and store it in a file, then call convert with use_conv='name of file'.
+See ngc1333_conv.py for an example. Note that the defaults here are 
+sensible for the test cube, but probably note for your dataset.
 
 In the following there are two cubes with different spatial/spectral resolution
-and only partially overlapping in space. With the use_conv flag the dimensions
+and only partially overlapping in space. With the use_conv option the dimensions
 are rescaled so that they will properly register when imported into Slicer3D 
 (other 3D software not tested). The c18o32 file has velocities in km/s, while
-the 13co10 file has velocities in m/s, so velocity_scale is used to account for 
+the 13co10 file has velocities in m/s, so vel_scale is used to account for 
 this.
 
 ```python
 import fits2itk
-fits2itk.convert("ngc1333_c18o32.fits","c18o32.nrrd",velocity_scale=1000.,use_conv=True)
-fits2itk.convert("ngc1333_13co10.fits","13co10.nrrd",velocity_scale=1.,use_conv=True)
+fits2itk.convert("ngc1333_c18o32.fits","c18o32.nrrd",vel_scale=1000.,use_conv="ngc1333_conv")
+fits2itk.convert("ngc1333_13co10.fits","13co10.nrrd",vel_scale=1.,use_conv="ngc1333_conv")
 ```
 License
 -------
