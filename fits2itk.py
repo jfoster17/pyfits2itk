@@ -13,20 +13,24 @@ Example Use
 import fits2itk
 
 # convert a FITS file using the default parameters
-inputfile = "ngc1333_co.fits"
-outputfile = "ngc1333_co.nrrd"
+infile = "ngc1333_co.fits"
+outfile = "ngc1333_co.nrrd"
 
-fits2itk.convert(inputfits,outputfile)
+fits2itk.convert(infile,outfile)
 
+# convert a FITS file using parameters defined
+# in an external file
 
+fits2itk.convert(infile,outfile,vel_scale=1,use_conv="ngc1333_conv")
 
 """
 
 import nrrd
 from astropy.io import fits
 import numpy as np
+import importlib 
 
-def convert(inputfile,outputfile,data_scale=1.,velocity_scale=False,use_conv=False):
+def convert(infile,outfile,data_scale=1.,vel_scale=False,use_conv=False):
     """
     Parameters
     ----------
@@ -35,46 +39,46 @@ def convert(inputfile,outputfile,data_scale=1.,velocity_scale=False,use_conv=Fal
         A value by which to scale the intensity of the cube,
         for instance to put it in useful units.
     
-    velocity_scale: Relative scale for the velocity axis, optional
+    vel_scale: Relative scale for the velocity axis, optional
         By default, the velocity axis has the same scale as the 
         spatial axes. If set to "auto" then the velocity axis
         is rescaled/regridded to have the same length as the shortest 
         spatial axis. Can also be used to set the scaling manually. 
         If your velocity axis is 10 times longer than your spatial 
-        axes, then the auto default will use velocity_scale=0.1 to 
-        match the axes. Setting velocity_scale=1 preserves the 
+        axes, then the auto default will use vel_scale=0.1 to 
+        match the axes. Setting vel_scale=1 preserves the 
         relative scales.
         
     use_conv: EXPERIMENTAL! Use a fixed convention for conversion.
-        Use some fixed values for the conversion of pixels
-        to millimeters. This allows one to convert multiple
+        Use values stored in an external file for the conversion of 
+        pixels to millimeters. This allows one to convert multiple
         different cubes/images and overlay them in Slicer3D 
         without needing to regrid/interpolate them ahead of time.
         Currently EXPERIMENTAL and assumes RA/Dec/Vel
-        Vel can be in km/s or m/s. Use velocity_scale to 
-        manually specify (i.e. use velocity_scale = 1000. for
-        the cubes in km/s and velocity_scale = 1. for the cubes
-        in m/s.). Alwas specify velocity_scale when using this
+        Vel can be in km/s or m/s. Use vel_scale to 
+        manually specify (i.e. use vel_scale = 1000. for
+        the cubes in km/s and vel_scale = 1. for the cubes
+        in m/s.). Always specify vel_scale when using this
         option.
         
     """
     
-    d,h = fits.getdata(inputfile,header=True)
+    d,h = fits.getdata(infile,header=True)
     
     if data_scale:
         d *= data_scale
-    if not velocity_scale: #Determine scale automatically
-        velocity_scale = 1.
-    elif velocity_scale == 'auto':
+    if not vel_scale: #Determine scale automatically
+        vel_scale = 1.
+    elif vel_scale == 'auto':
         min_spatial = np.min(h['NAXIS1'],h['NAXIS2'])
         vel_length = h['NAXIS3']
-        velocity_scale = min_spatial/vel_length
-    if velocity_scale != 1 and not use_conv: #regrid velocity
+        vel_scale = min_spatial/vel_length
+    if vel_scale != 1 and not use_conv: #regrid velocity
         #This really isn't necessary or desireable. We could
         #just change the velocity scaling in the NRRD file
         #like we do for use_conv
         import pycongrid
-        d = pycongrid.congrid(d,(h['NAXIS3']*velocity_scale,
+        d = pycongrid.congrid(d,(h['NAXIS3']*vel_scale,
                                  h['NAXIS2'],h['NAXIS1']),
                                  method='spline')
     
@@ -95,30 +99,19 @@ def convert(inputfile,outputfile,data_scale=1.,velocity_scale=False,use_conv=Fal
     racenter = 0
     deccenter = 0
     velcenter = 0
-
-    #This dictionary defines a convention for
-    #aligning cubes. Make this a possible input
-    #ra-mm is the conversion between mm and degrees of arc
-    #A value of around 9000 works well for NGC1333
-    #vel-mm is beween mm and m/s. 1 is fine for NGC1333
-    #ra0,dec0,vel0 is the center in degrees and m/s.
-
-    c_dict = {"ra-mm":9000.,
-              "dec-mm":9000.,
-              "vel-mm":1.,
-              "ra0":52.24,
-              "dec0":31.40,
-              "vel0":7800.}
-
     
     if use_conv:
-        dra  = h['CDELT1']*c_dict['ra-mm']
-        ddec = h['CDELT2']*c_dict['dec-mm']
-        dvel = h['CDELT3']*c_dict['vel-mm']*velocity_scale #Requires m/s
-        ra0  = c_dict['ra0']
-        dec0 = c_dict['dec']
-        vel0 = c_dict['vel0']/velocity_scale
-        racenter = (ra0-h['CRVAL1'])*np.cos(c_dict['dec0']*3.14/180.)/h['CDELT1']+h['CRPIX1']
+        # This line imports the dictionary defined in your convention 
+        # file. The example included is called ngc1333_conv.py
+        i = importlib.import_module(use_conv)
+        dra  = h['CDELT1']*i.c_dict['ra-mm']
+        ddec = h['CDELT2']*i.c_dict['dec-mm']
+        dvel = h['CDELT3']*i.c_dict['vel-mm']*vel_scale #Requires m/s
+        ra0  = i.c_dict['ra0']
+        dec0 = i.c_dict['dec0']
+        vel0 = i.c_dict['vel0']/vel_scale
+        racenter = ((ra0-h['CRVAL1'])*np.cos(i.c_dict['dec0']*
+                    np.pi/180.))/h['CDELT1']+h['CRPIX1']
         deccenter = -1*((dec0-h['CRVAL2'])/h['CDELT2']+h['CRPIX2'])
         velcenter = -1*((vel0-h['CRVAL3'])/(h['CDELT3'])+h['CRPIX3'])
 
@@ -131,11 +124,11 @@ def convert(inputfile,outputfile,data_scale=1.,velocity_scale=False,use_conv=Fal
     spaceorigin[2] = deccenter*ddec
     options['space origin'] = spaceorigin
 
-    #This could be an option. 'raw' allows import in paraview. 'gzip' files can
-    #be a lot smaller, depending on the cube.
+    #This could be an option. 'raw' allows import in paraview. 
+    #'gzip' files can be a lot smaller, depending on the cube.
     options['encoding'] = 'raw'
     print(options)
-    nrrd.write(outputfile,d,options=options)
+    nrrd.write(outfile,d,options=options)
     
 def read(inputfile):
     data,options = nrdd.read(inputfile)
