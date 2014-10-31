@@ -70,7 +70,7 @@ def convert(infile,outfile,data_scale=1.,vel_scale=False,use_conv=False):
     if not vel_scale: #Determine scale automatically
         vel_scale = 1.
     elif vel_scale == 'auto':
-        min_spatial = np.min(h['NAXIS1'],h['NAXIS2'])
+        min_spatial = np.min([h['NAXIS1'],h['NAXIS2']])
         vel_length = h['NAXIS3']
         vel_scale = min_spatial/vel_length
     if vel_scale != 1 and not use_conv: #regrid velocity
