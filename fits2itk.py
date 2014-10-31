@@ -23,12 +23,28 @@ fits2itk.convert(infile,outfile)
 
 fits2itk.convert(infile,outfile,vel_scale=1,use_conv="ngc1333_conv")
 
+You can use the included strip_fourth_header.py to remove
+any polarization axis present in your data.
+
+Can be run from the command line as
+python fits2itk.py -i ngc1333_co.fits -o ngc1333_co.nrrd
+
+with the following options
+
+-i : Infile       -- Input (FITS) file (req)
+-o : Outfile      -- Output (NRRD) file (req)
+-d : Datascale    -- Value by which to scale intensity (opt)
+-v : Velscale     -- Relative scale for velocity axis (often < 1) (opt)
+-u : Use Conv     -- Use the specified fixed/external conversion (opt)
+-h : Help         -- Display this help
+
 """
 
 import nrrd
 from astropy.io import fits
 import numpy as np
 import importlib 
+import sys,os,getopt
 
 def convert(infile,outfile,data_scale=1.,vel_scale=False,use_conv=False):
     """
@@ -77,14 +93,13 @@ def convert(infile,outfile,data_scale=1.,vel_scale=False,use_conv=False):
     dra = 1.
     dvel = 1.
     ddec = 1.
-    racenter = 0
-    deccenter = 0
-    velcenter = 0
+    racenter = h['NAXIS1']/2.
+    deccenter = -1*h['NAXIS2']/2.
+    velcenter = -1*h['NAXIS3']/2.
     
-        
     if vel_scale != 1 and not use_conv: #regrid velocity
-        dvel = dvel*vel_scale
-    
+        dvel = dvel/vel_scale
+        
     
     #Assume FITS order is RA,Dec,Velocity
     #Numpy order is Velocity, Dec, RA
@@ -95,8 +110,7 @@ def convert(infile,outfile,data_scale=1.,vel_scale=False,use_conv=False):
     
     #Want the _center_ of the cube at 0
     spaceorigin = -1*np.array(d.shape)/2.
-    
-    
+
     if use_conv:
         # This line imports the dictionary defined in your convention 
         # file. The example included is called "ngc1333_conv"
@@ -130,3 +144,51 @@ def convert(infile,outfile,data_scale=1.,vel_scale=False,use_conv=False):
 def read(inputfile):
     data,options = nrdd.read(inputfile)
     return(data,options)
+
+def main():
+    """
+    -i : Infile       -- Input (FITS) file
+    -o : Outfile      -- Output (NRRD) file
+    -d : Datascale    -- Value by which to scale intensity
+    -v : Velscale     -- Relative scale for velocity axis (often < 1)
+    -u : Use Conv     -- Use the specified fixed/external conversion
+    -h : Help         -- Display this help
+    """
+    infile, outfile = False, False
+    kwargs = {}
+    kwargs["vel_scale"] = "auto"
+    try:
+        opts,args = getopt.getopt(sys.argv[1:],"i:o:d:v:u:h")
+    except getopt.GetoptError,err:
+        print(str(err))
+        print(__doc__)
+        sys.exit(2)
+    for o,a in opts:
+        if o == "-i":
+            infile = a
+        elif o == "-o":
+            outfile = a
+        elif o == "-d":
+            kwargs["data_scale"] = float(a)
+        elif o == "-v":
+            kwargs["vel_scale"] = float(a)
+        elif o == "-u":
+            kwargs["use_conv"] = a
+        elif o == "-h":
+            print(__doc__)
+            sys.exit(1)
+        else:
+            assert False, "unhandled option"
+            print(__doc__)
+            sys.exit(2)
+    if not infile or not outfile:
+        assert False, "Input or Output file not specified"
+        print(__doc__)
+        sys.exit(2)
+    print(kwargs)
+    convert(infile,outfile,**kwargs)
+        
+    
+    
+if __name__ == '__main__':
+    main()

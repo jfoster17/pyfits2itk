@@ -7,5 +7,5 @@ setup(name='pyfits2itk',
       author='Jonathan Foster',
       author_email='jonathan.bruce.foster@gmail.com',
       url='http://github.com/jfoster17/pyfits2itk',
-      py_modules=['fits2itk','nrrd'],
+      py_modules=['fits2itk','nrrd','strip_fourth_fits_header'],
       )
