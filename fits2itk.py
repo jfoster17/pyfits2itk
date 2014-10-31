@@ -73,14 +73,17 @@ def convert(infile,outfile,data_scale=1.,vel_scale=False,use_conv=False):
         min_spatial = np.min([h['NAXIS1'],h['NAXIS2']])
         vel_length = h['NAXIS3']
         vel_scale = min_spatial/vel_length
+    
+    dra = 1.
+    dvel = 1.
+    ddec = 1.
+    racenter = 0
+    deccenter = 0
+    velcenter = 0
+    
+        
     if vel_scale != 1 and not use_conv: #regrid velocity
-        #This really isn't necessary or desireable. We could
-        #just change the velocity scaling in the NRRD file
-        #like we do for use_conv
-        import pycongrid
-        d = pycongrid.congrid(d,(h['NAXIS3']*vel_scale,
-                                 h['NAXIS2'],h['NAXIS1']),
-                                 method='spline')
+        dvel = dvel*vel_scale
     
     
     #Assume FITS order is RA,Dec,Velocity
@@ -93,12 +96,6 @@ def convert(infile,outfile,data_scale=1.,vel_scale=False,use_conv=False):
     #Want the _center_ of the cube at 0
     spaceorigin = -1*np.array(d.shape)/2.
     
-    dra = 1.
-    dvel = 1.
-    ddec = 1.
-    racenter = 0
-    deccenter = 0
-    velcenter = 0
     
     if use_conv:
         # This line imports the dictionary defined in your convention 
