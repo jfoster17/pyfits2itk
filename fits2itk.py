@@ -36,6 +36,8 @@ with the following options
 -d : Datascale    -- Value by which to scale intensity (opt)
 -v : Velscale     -- Relative scale for velocity axis (often < 1) (opt)
 -u : Use Conv     -- Use the specified fixed/external conversion (opt)
+-s : Strip Pol    -- Strip out the fourth polarization header
+                     Does not alter original FITS file
 -h : Help         -- Display this help
 
 """
@@ -45,6 +47,7 @@ from astropy.io import fits
 import numpy as np
 import importlib 
 import sys,os,getopt
+import strip_fourth_fits_header
 
 def convert(infile,outfile,data_scale=1.,vel_scale=False,use_conv=False):
     """
@@ -97,7 +100,7 @@ def convert(infile,outfile,data_scale=1.,vel_scale=False,use_conv=False):
     deccenter = -1*h['NAXIS2']/2.
     velcenter = -1*h['NAXIS3']/2.
     
-    if vel_scale != 1 and not use_conv: #regrid velocity
+    if vel_scale != 1 and not use_conv:
         dvel = dvel/vel_scale
         
     
@@ -152,13 +155,16 @@ def main():
     -d : Datascale    -- Value by which to scale intensity
     -v : Velscale     -- Relative scale for velocity axis (often < 1)
     -u : Use Conv     -- Use the specified fixed/external conversion
+    -s : Strip Pol    -- Strip out the fourth polarization header
+                         Does not alter original FITS file
     -h : Help         -- Display this help
     """
     infile, outfile = False, False
+    strip_pol = False
     kwargs = {}
     kwargs["vel_scale"] = "auto"
     try:
-        opts,args = getopt.getopt(sys.argv[1:],"i:o:d:v:u:h")
+        opts,args = getopt.getopt(sys.argv[1:],"i:o:d:v:u:sh")
     except getopt.GetoptError,err:
         print(str(err))
         print(__doc__)
@@ -174,6 +180,8 @@ def main():
             kwargs["vel_scale"] = float(a)
         elif o == "-u":
             kwargs["use_conv"] = a
+        elif o == "-s":
+            strip_pol = True
         elif o == "-h":
             print(__doc__)
             sys.exit(1)
@@ -186,8 +194,13 @@ def main():
         print(__doc__)
         sys.exit(2)
     print(kwargs)
-    convert(infile,outfile,**kwargs)
-        
+    if strip_pol:
+        tempfile = "temp-strip-pol.fits"
+        strip_fourth_fits_header.strip(infile,tempfile,clobber=True)
+        convert(tempfile,outfile,**kwargs)
+        os.remove(tempfile)
+    else:
+        convert(infile,outfile,**kwargs)
     
     
 if __name__ == '__main__':
